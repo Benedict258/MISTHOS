@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+/dist/
+/build/
+coverage/
+
+# Vite / env
+.env
+.env.*
+!.env.example
+.env.local
+
+# Solana / Anchor / Rust build artifacts
+contracts/target/
+contracts/logs/
+contracts/.anchor/
+contracts/**/*.rs.bk
+
+# Rust artifacts
+**/target/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

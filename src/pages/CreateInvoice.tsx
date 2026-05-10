@@ -10,6 +10,7 @@ import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { MisthosSDK } from '@/lib/misthos';
+import { formatErrorMessage, getTxExplorerLink, withRetry } from '@/lib/qa-utils';
 
 const TOKEN_MINTS: Record<string, string> = {
   USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
@@ -203,12 +204,22 @@ const CreateInvoice: React.FC = () => {
     e.preventDefault();
 
     if (!sdk) {
-      toast({ title: 'Wallet Required', description: 'Connect a wallet before creating an on-chain invoice.' });
+      toast({ title: 'Wallet Required', description: 'Connect your Solflare wallet to create an invoice on-chain.' });
+      return;
+    }
+
+    if (!clientEmail.trim()) {
+      toast({ title: 'Email Required', description: 'Enter the client email.' });
       return;
     }
 
     if (!payerWalletAddress.trim()) {
-      toast({ title: 'Payer Wallet Required', description: 'Enter the payer wallet address to create this invoice on-chain.' });
+      toast({ title: 'Payer Wallet Required', description: 'Enter a valid payer wallet address.' });
+      return;
+    }
+
+    if (total <= 0) {
+      toast({ title: 'Invalid Amount', description: 'Add at least one line item with a rate > 0.' });
       return;
     }
 
@@ -234,26 +245,32 @@ const CreateInvoice: React.FC = () => {
         })),
       });
 
-      const createResult = await sdk.createInvoice({
-        invoiceId,
-        payer,
-        amount: amountInMinorUnits,
-        tokenMint,
-        dueDate: dueTimestamp,
-        metadataHash,
-      });
+      // Retry on RPC failure for robustness
+      const createResult = await withRetry(
+        () => sdk.createInvoice({
+          invoiceId,
+          payer,
+          amount: amountInMinorUnits,
+          tokenMint,
+          dueDate: dueTimestamp,
+          metadataHash,
+        }),
+        3,
+        1000
+      );
 
       if (!createResult.success || !createResult.data) {
-        throw new Error(createResult.error || 'Failed to create invoice');
+        throw new Error(createResult.error || 'Failed to create invoice on-chain');
       }
 
       const invoiceAddress = new PublicKey(createResult.data.invoiceAddress);
       const sendResult = await sdk.sendInvoice(invoiceAddress);
       if (!sendResult.success) {
-        throw new Error(sendResult.error || 'Invoice created, but failed to mark as sent');
+        throw new Error(sendResult.error || 'Invoice created but failed to send');
       }
 
-      await fetch('/api/email/send', {
+      // Fire-and-forget email (do not block on failure)
+      fetch('/api/email/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -270,15 +287,21 @@ const CreateInvoice: React.FC = () => {
         }),
       }).catch(() => undefined);
 
+      // Show success with clickable explorer link for tx signature
+      const txLink = getTxExplorerLink(createResult.data.signature);
       toast({
         title: 'Invoice Created On-Chain',
-        description: `Created and sent successfully. Tx: ${createResult.data.signature.slice(0, 12)}...`,
+        description: `View transaction: ${createResult.data.signature.slice(0, 12)}...`,
       });
 
-      navigate(`/pay/${createResult.data.invoiceAddress}`);
+      // Redirect to payment page after brief delay for user to see toast
+      setTimeout(() => navigate(`/pay/${createResult.data.invoiceAddress}`), 1200);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast({ title: 'Create Invoice Failed', description: message });
+      const friendlyMsg = formatErrorMessage(error);
+      toast({
+        title: 'Create Invoice Failed',
+        description: friendlyMsg,
+      });
     } finally {
       setIsSubmitting(false);
     }

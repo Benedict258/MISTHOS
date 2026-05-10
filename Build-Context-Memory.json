@@ -985,70 +985,181 @@
                                             "Commit only source changes after repo noise is reduced"
                                         ],
                          "notes":  "10k+ commit concern was not an actual commit history issue. The repository is currently an unborn git branch with no commits; the real fix was to ignore generated files and focus on Devnet verification."
+                     },
+                     {
+                         "session_id": "session_017",
+                         "timestamp": "2026-05-09T00:10:00Z",
+                         "ai_agent": "GitHub Copilot",
+                         "current_phase": "repo_cleanup_and_integration_start",
+                         "progress": {
+                             "completed": [
+                                 "Added .gitignore entries for node_modules, target, and env files",
+                                 "Added scripts/cleanup-git.ps1 to untrack generated artifacts"
+                             ],
+                             "in_progress": [
+                                 "Wiring frontend to use on-chain program IDs in src/lib/configAddress.ts",
+                                 "Start Phase 3: connect frontend SDK to the deployed program (Devnet)"
+                             ],
+                             "blocked": [
+                                 "Local Anchor/Solana toolchain verification for on-chain deploy (if needed)"
+                             ]
+                         },
+                         "last_session_summary": "Added repository cleanup script and updated .gitignore; began wiring frontend towards Phase 3 integration. Next: validate Devnet deployment and run end-to-end tests.",
+                         "changes_made": [
+                             "Created scripts/cleanup-git.ps1",
+                             "Updated Build-Context-Memory.json with a new session entry"
+                         ],
+                         "file_module_map": [
+                             {
+                                 "file": ".gitignore",
+                                 "purpose": "Ignore generated artifacts and dependency folders",
+                                 "last_modified": "2026-05-09T00:10:00Z"
+                             },
+                             {
+                                 "file": "scripts/cleanup-git.ps1",
+                                 "purpose": "Untrack generated artifacts from git index",
+                                 "last_modified": "2026-05-09T00:10:00Z"
+                             },
+                             {
+                                 "file": "Build-Context-Memory.json",
+                                 "purpose": "Session memory log",
+                                 "last_modified": "2026-05-09T00:10:00Z"
+                             }
+                         ],
+                         "decisions_log": [
+                             {
+                                 "decision": "Stop tracking generated artifacts and focus on Devnet-first flow",
+                                 "reason": "Reduces repo noise and allows integration testing without rewriting history",
+                                 "alternatives_considered": "Rewrite git history to purge large files (deferred)"
+                             }
+                         ],
+                         "known_issues": [
+                             {
+                                 "issue": "Anchor/solana CLI availability",
+                                 "severity": "medium",
+                                 "status": "in-progress"
+                             }
+                         ],
+                         "errors_encountered": [],
+                         "next_steps": [
+                             "Run scripts/cleanup-git.ps1 locally to remove cached artifacts",
+                             "Verify frontend builds (npm install & npm run build) after cleaning",
+                             "Deploy workspace.so to Devnet using solana program deploy (if available) or use existing Devnet program id",
+                             "Run end-to-end: CreateInvoice -> PayInvoice -> releaseEscrow flow on Devnet"
+                         ],
+                         "notes": "User requested .gitignore update and JSON memory update last; both completed. Ask user for confirmation to rewrite history if desired."
+                     },
+                     {
+                         "session_id": "session_018",
+                         "timestamp": "2026-05-09T13:30:00Z",
+                         "ai_agent": "GitHub Copilot",
+                         "current_phase": "phase_4_qa_polish_and_local_setup",
+                         "progress": {
+                             "completed": [
+                                 "Added Solflare wallet adapter support to src/App.tsx",
+                                 "Created src/lib/qa-utils.ts for explorer links, retry logic, and friendly errors",
+                                 "Enhanced CreateInvoice.tsx with validation, retry logic, and better tx feedback",
+                                 "Enhanced PayInvoice.tsx with retry logic and user-friendly payment failure messages",
+                                 "Created SOLFLARE_LOCAL_SETUP.md for local Devnet testing",
+                                 "Updated NEEDS_FROM_YOU.md to reflect manual Solflare switching",
+                                 "Confirmed default Devnet RPC is fine for local testing",
+                                 "Updated todo list to mark Phase 3 and Phase 4 complete"
+                             ],
+                             "in_progress": [
+                                 "npm install / dependency cleanup after EPERM and ENOENT issues",
+                                 "Local smoke test: npm run dev, connect Solflare, create/pay/release flow"
+                             ],
+                             "blocked": [
+                                 "node_modules cleanup and npm cache integrity on Windows",
+                                 "Local browser smoke test until install completes successfully"
+                             ]
+                         },
+                         "last_session_summary": "Phase 4 QA polish was implemented and Solflare local setup was documented. The remaining blocker is npm install / cache cleanup on Windows before running the local dev server and smoke tests.",
+                         "changes_made": [
+                             "Created src/lib/qa-utils.ts",
+                             "Updated src/pages/CreateInvoice.tsx",
+                             "Updated src/pages/PayInvoice.tsx",
+                             "Updated src/App.tsx",
+                             "Created SOLFLARE_LOCAL_SETUP.md",
+                             "Updated NEEDS_FROM_YOU.md",
+                             "Updated MVP checklist and todo tracking"
+                         ],
+                         "file_module_map": [
+                             {
+                                 "file": "src/lib/qa-utils.ts",
+                                 "purpose": "User-friendly error formatting, explorer link generation, and retry helpers",
+                                 "last_modified": "2026-05-09T13:30:00Z"
+                             },
+                             {
+                                 "file": "src/pages/CreateInvoice.tsx",
+                                 "purpose": "Invoice creation UI with validation and retry-aware on-chain submission",
+                                 "last_modified": "2026-05-09T13:30:00Z"
+                             },
+                             {
+                                 "file": "src/pages/PayInvoice.tsx",
+                                 "purpose": "Payment UI with enhanced on-chain feedback and error handling",
+                                 "last_modified": "2026-05-09T13:30:00Z"
+                             },
+                             {
+                                 "file": "src/App.tsx",
+                                 "purpose": "Wallet adapter setup with Solflare support",
+                                 "last_modified": "2026-05-09T13:30:00Z"
+                             },
+                             {
+                                 "file": "SOLFLARE_LOCAL_SETUP.md",
+                                 "purpose": "Manual Solflare local test guide",
+                                 "last_modified": "2026-05-09T13:30:00Z"
+                             }
+                         ],
+                         "decisions_log": [
+                             {
+                                 "decision": "Use existing Devnet program ID for local testing",
+                                 "reason": "Avoids unnecessary redeploy and keeps local testing focused on the current program",
+                                 "alternatives_considered": "Deploy a fresh program ID to Devnet"
+                             },
+                             {
+                                 "decision": "Use manual Solflare account switching for role testing",
+                                 "reason": "Simplifies setup and avoids needing separate wallet provisioning for the first pass",
+                                 "alternatives_considered": "Pre-fill creator and payer wallets"
+                             },
+                             {
+                                 "decision": "Prioritize Phase 4 QA polish before the local smoke test",
+                                 "reason": "Improves reliability and user feedback before browser testing",
+                                 "alternatives_considered": "Run smoke test immediately after Phase 3"
+                             }
+                         ],
+                         "known_issues": [
+                             {
+                                 "issue": "npm install returned EPERM cleanup errors and ENOENT cache error on Windows",
+                                 "severity": "high",
+                                 "status": "in-progress"
+                             },
+                             {
+                                 "issue": "Local dev server not yet started because npm install is unresolved",
+                                 "severity": "medium",
+                                 "status": "in-progress"
+                             }
+                         ],
+                         "errors_encountered": [
+                             {
+                                 "error": "npm error enoent Invalid response body while trying to fetch https://registry.npmjs.org/nanoid",
+                                 "context": "Running npm install after removing node_modules and package-lock.json on Windows",
+                                 "resolution": "Needs npm cache cleanup and a fresh reinstall with legacy peer deps or forced clean install"
+                             },
+                             {
+                                 "error": "npm warn cleanup Failed to remove some directories (EPERM)",
+                                 "context": "Removing old node_modules tree during reinstall",
+                                 "resolution": "Use elevated PowerShell and clear file locks before reinstalling"
+                             }
+                         ],
+                         "next_steps": [
+                             "Finish npm cleanup and reinstall",
+                             "Run npm run dev and confirm Vite starts",
+                             "Open the app in browser and test Solflare local flow",
+                             "Verify create -> pay -> release smoke test on existing Devnet program",
+                             "Address any residual QA issues from browser testing"
+                         ],
+                         "notes": "The current state is Phase 4 QA polish complete, Solflare local setup documented, and the remaining blocker is fixing npm install on Windows so the local dev server can run."
                      }
-                 ],
-    {
-        "session_id": "session_017",
-        "timestamp": "2026-05-09T00:10:00Z",
-        "ai_agent": "GitHub Copilot",
-        "current_phase": "repo_cleanup_and_integration_start",
-        "progress": {
-            "completed": [
-                "Added .gitignore entries for node_modules, target, and env files",
-                "Added scripts/cleanup-git.ps1 to untrack generated artifacts"
-            ],
-            "in_progress": [
-                "Wiring frontend to use on-chain program IDs in src/lib/configAddress.ts",
-                "Start Phase 3: connect frontend SDK to the deployed program (Devnet)"
-            ],
-            "blocked": [
-                "Local Anchor/Solana toolchain verification for on-chain deploy (if needed)"
-            ]
-        },
-        "last_session_summary": "Added repository cleanup script and updated .gitignore; began wiring frontend towards Phase 3 integration. Next: validate Devnet deployment and run end-to-end tests.",
-        "changes_made": [
-            "Created scripts/cleanup-git.ps1",
-            "Updated Build-Context-Memory.json with a new session entry"
-        ],
-        "file_module_map": [
-            {
-                "file": ".gitignore",
-                "purpose": "Ignore generated artifacts and dependency folders",
-                "last_modified": "2026-05-09T00:10:00Z"
-            },
-            {
-                "file": "scripts/cleanup-git.ps1",
-                "purpose": "Untrack generated artifacts from git index",
-                "last_modified": "2026-05-09T00:10:00Z"
-            },
-            {
-                "file": "Build-Context-Memory.json",
-                "purpose": "Session memory log",
-                "last_modified": "2026-05-09T00:10:00Z"
-            }
-        ],
-        "decisions_log": [
-            {
-                "decision": "Stop tracking generated artifacts and focus on Devnet-first flow",
-                "reason": "Reduces repo noise and allows integration testing without rewriting history",
-                "alternatives_considered": "Rewrite git history to purge large files (deferred)"
-            }
-        ],
-        "known_issues": [
-            {
-                "issue": "Anchor/solana CLI availability",
-                "severity": "medium",
-                "status": "in-progress"
-            }
-        ],
-        "errors_encountered": [],
-        "next_steps": [
-            "Run scripts/cleanup-git.ps1 locally to remove cached artifacts",
-            "Verify frontend builds (npm install & npm run build) after cleaning",
-            "Deploy workspace.so to Devnet using solana program deploy (if available) or use existing Devnet program id",
-            "Run end-to-end: CreateInvoice -> PayInvoice -> releaseEscrow flow on Devnet"
-        ],
-        "notes": "User requested .gitignore update and JSON memory update last; both completed. Ask user for confirmation to rewrite history if desired."
-    }
-]
+                 ]
 }

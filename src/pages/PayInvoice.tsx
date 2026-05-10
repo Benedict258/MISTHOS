@@ -9,6 +9,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { DEMO_INVOICES, type Invoice, type InvoiceStatus } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { MisthosSDK, getInvoiceStatusString } from '@/lib/misthos';
+import { formatErrorMessage, getTxExplorerLink, withRetry } from '@/lib/qa-utils';
 
 type PaymentMethod = 'wallet' | 'crosschain' | 'card' | 'x402';
 type PaymentStage = 'select' | 'details' | 'processing' | 'confirming' | 'confirmed';
@@ -97,8 +98,11 @@ const PayInvoice: React.FC = () => {
           payer: result.data.payer.toString(),
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        toast({ title: 'On-Chain Invoice Load Failed', description: message });
+        const friendlyMsg = formatErrorMessage(error);
+        toast({
+          title: 'On-Chain Invoice Load Failed',
+          description: friendlyMsg,
+        });
       } finally {
         setIsInvoiceLoading(false);
       }
@@ -163,30 +167,42 @@ const PayInvoice: React.FC = () => {
         };
 
         const payResult = selectedMethod === 'x402'
-          ? await sdk.payX402(onChainInvoiceAddress, 3)
-          : await sdk.payInvoice({
-              invoiceAddress: onChainInvoiceAddress,
-              paymentMethod: paymentMethodMap[selectedMethod],
-            });
+          ? await withRetry(
+              () => sdk.payX402(onChainInvoiceAddress, 3),
+              3,
+              1000
+            )
+          : await withRetry(
+              () => sdk.payInvoice({
+                invoiceAddress: onChainInvoiceAddress,
+                paymentMethod: paymentMethodMap[selectedMethod],
+              }),
+              3,
+              1000
+            );
 
         if (!payResult.success || !payResult.data) {
-          throw new Error(payResult.error || 'Payment failed');
+          throw new Error(payResult.error || 'Payment failed on-chain');
         }
 
         setStage('confirming');
         setTimeout(() => {
           setTxHash(payResult.data!.signature);
           setStage('confirmed');
+          const explorerLink = getTxExplorerLink(payResult.data!.signature);
           toast({
             title: 'On-Chain Payment Confirmed',
-            description: `Payment settled in escrow. Tx: ${payResult.data!.signature.slice(0, 12)}...`,
+            description: `Confirmed. View Tx: ${payResult.data!.signature.slice(0, 12)}...`,
           });
         }, 900);
         return;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const friendlyMsg = formatErrorMessage(error);
         setStage('details');
-        toast({ title: 'On-Chain Payment Failed', description: message });
+        toast({
+          title: 'On-Chain Payment Failed',
+          description: friendlyMsg,
+        });
         return;
       } finally {
         setIsPaying(false);

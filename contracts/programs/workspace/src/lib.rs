@@ -77,7 +77,6 @@ pub mod workspace {
             invoice.status == InvoiceStatus::Sent || invoice.status == InvoiceStatus::Viewed,
             ErrorCode::InvalidStatus
         );
-        require!(invoice.payer == ctx.accounts.payer.key(), ErrorCode::Unauthorized);
         require!(payment_method <= 3, ErrorCode::InvalidPaymentMethod);
 
         let amount = invoice.amount;
@@ -99,6 +98,7 @@ pub mod workspace {
         let clock = Clock::get()?;
 
         let invoice = &mut ctx.accounts.invoice_account;
+        invoice.payer = ctx.accounts.payer.key();
         invoice.status = InvoiceStatus::Paid;
         invoice.paid_at = clock.unix_timestamp;
 
@@ -151,7 +151,6 @@ pub mod workspace {
             invoice.status == InvoiceStatus::Sent || invoice.status == InvoiceStatus::Viewed,
             ErrorCode::InvalidStatus
         );
-        require!(invoice.payer == ctx.accounts.payer.key(), ErrorCode::Unauthorized);
 
         let _ = payment_method_data;
 
@@ -174,6 +173,7 @@ pub mod workspace {
         let clock = Clock::get()?;
 
         let invoice = &mut ctx.accounts.invoice_account;
+        invoice.payer = ctx.accounts.payer.key();
         invoice.status = InvoiceStatus::Paid;
         invoice.paid_at = clock.unix_timestamp;
 

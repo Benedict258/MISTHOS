@@ -5,6 +5,8 @@ import { ExternalLink, Search, Filter, Plus } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import { DEMO_INVOICES, type InvoiceStatus } from '@/lib/constants';
 
+const DEVNET_EXPLORER = 'https://explorer.solana.com';
+
 const filterOptions: (InvoiceStatus | 'all')[] = ['all', 'draft', 'sent', 'paid', 'settled', 'overdue', 'disputed'];
 
 const InvoiceTable: React.FC = () => {
@@ -73,6 +75,7 @@ const InvoiceTable: React.FC = () => {
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3 hidden sm:table-cell">Amount</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3 hidden md:table-cell">Due Date</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3">Status</th>
+              <th className="text-center text-xs font-medium text-muted-foreground px-5 py-3">Proof</th>
               <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3"></th>
             </tr>
           </thead>
@@ -107,6 +110,22 @@ const InvoiceTable: React.FC = () => {
                 <td className="px-5 py-3.5">
                   <StatusBadge status={inv.status} />
                 </td>
+                <td className="px-5 py-3.5 text-center">
+                  {inv.txHash ? (
+                    <a
+                      href={`${DEVNET_EXPLORER}/tx/${inv.txHash}?cluster=devnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-500 hover:text-blue-600 transition-colors"
+                      title="View on Devnet Explorer"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">On-Chain</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </td>
                 <td className="px-5 py-3.5 text-right">
                   <Link
                     to={`/invoice/${inv.id}`}
@@ -119,7 +138,7 @@ const InvoiceTable: React.FC = () => {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted-foreground">
                   No invoices found.
                 </td>
               </tr>

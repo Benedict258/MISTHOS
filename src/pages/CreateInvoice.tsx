@@ -89,7 +89,6 @@ const CreateInvoice: React.FC = () => {
 
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [payerWalletAddress, setPayerWalletAddress] = useState('');
   const [token, setToken] = useState('USDC');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -213,11 +212,6 @@ const CreateInvoice: React.FC = () => {
       return;
     }
 
-    if (!payerWalletAddress.trim()) {
-      toast({ title: 'Payer Wallet Required', description: 'Enter a valid payer wallet address.' });
-      return;
-    }
-
     if (total <= 0) {
       toast({ title: 'Invalid Amount', description: 'Add at least one line item with a rate > 0.' });
       return;
@@ -225,7 +219,7 @@ const CreateInvoice: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const payer = new PublicKey(payerWalletAddress.trim());
+      const publicPayer = new PublicKey('11111111111111111111111111111111');
       const tokenMint = new PublicKey(TOKEN_MINTS[token] || TOKEN_MINTS.USDC);
       const decimals = TOKEN_DECIMALS[token] ?? 6;
       const amountInMinorUnits = Math.round(total * Math.pow(10, decimals));
@@ -249,7 +243,7 @@ const CreateInvoice: React.FC = () => {
       const createResult = await withRetry(
         () => sdk.createInvoice({
           invoiceId,
-          payer,
+          payer: publicPayer,
           amount: amountInMinorUnits,
           tokenMint,
           dueDate: dueTimestamp,
@@ -453,17 +447,6 @@ const CreateInvoice: React.FC = () => {
                   required
                   placeholder="sarah@designco.io"
                   className="w-full px-3 py-2.5 text-sm bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Payer Wallet Address (Solana)</label>
-                <input
-                  type="text"
-                  value={payerWalletAddress}
-                  onChange={(e) => setPayerWalletAddress(e.target.value)}
-                  required
-                  placeholder="Enter payer public key (base58)"
-                  className="w-full px-3 py-2.5 text-sm bg-secondary border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 font-mono"
                 />
               </div>
             </div>

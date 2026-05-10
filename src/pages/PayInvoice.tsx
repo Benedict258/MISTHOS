@@ -15,10 +15,10 @@ type PaymentMethod = 'wallet' | 'crosschain' | 'card' | 'x402';
 type PaymentStage = 'select' | 'details' | 'processing' | 'confirming' | 'confirmed';
 
 const paymentMethods = [
-  { id: 'wallet' as const, label: 'Solana Wallet', icon: Wallet, desc: 'Pay with SOL or SPL tokens directly' },
-  { id: 'crosschain' as const, label: 'Cross-Chain (LI.FI)', icon: Globe, desc: 'Pay from ETH, Base, Polygon, 60+ chains' },
-  { id: 'card' as const, label: 'Card Payment', icon: CreditCard, desc: 'Visa/Mastercard — no wallet needed' },
-  { id: 'x402' as const, label: 'x402 Link', icon: Link2, desc: 'HTTP-native one-click payment' },
+  { id: 'wallet' as const, label: 'Solana Wallet', icon: Wallet, desc: 'Pay with SOL or SPL tokens directly', status: 'ready' as const },
+  { id: 'crosschain' as const, label: 'Cross-Chain (LI.FI)', icon: Globe, desc: 'Pay from ETH, Base, Polygon, 60+ chains', status: 'coming' as const },
+  { id: 'card' as const, label: 'Card Payment', icon: CreditCard, desc: 'Visa/Mastercard — no wallet needed', status: 'coming' as const },
+  { id: 'x402' as const, label: 'x402 Link', icon: Link2, desc: 'HTTP-native one-click payment', status: 'coming' as const },
 ];
 
 const PayInvoice: React.FC = () => {
@@ -154,6 +154,15 @@ const PayInvoice: React.FC = () => {
 
   const handlePay = async () => {
     if (!selectedMethod) return;
+
+    // Guard: Only wallet method is real for hackathon demo
+    if (selectedMethod !== 'wallet') {
+      toast({
+        title: '🚀 Coming Soon',
+        description: `${paymentMethods.find(m => m.id === selectedMethod)?.label} launches next sprint. Core Solana wallet payment is live today.`,
+      });
+      return;
+    }
 
     if (onChainInvoiceAddress && sdk) {
       setIsPaying(true);
@@ -639,20 +648,52 @@ const PayInvoice: React.FC = () => {
                     <button
                       key={method.id}
                       onClick={() => {
+                        if (method.status === 'coming') {
+                          toast({
+                            title: '🚀 Coming Soon',
+                            description: `${method.label} is launching in the next sprint.`,
+                          });
+                          return;
+                        }
                         setSelectedMethod(method.id);
                         setStage('details');
                       }}
-                      className="p-4 rounded-lg border border-border bg-secondary hover:bg-surface-hover hover:border-primary/20 text-left transition-all group"
+                      disabled={method.status === 'coming'}
+                      className={`p-4 rounded-lg border text-left transition-all group ${
+                        method.status === 'coming'
+                          ? 'border-border/30 bg-muted/30 cursor-not-allowed opacity-60'
+                          : 'border-border bg-secondary hover:bg-surface-hover hover:border-primary/20'
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-muted group-hover:bg-primary/10 transition-colors">
-                          <method.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${
+                          method.status === 'coming'
+                            ? 'bg-muted/30'
+                            : 'bg-muted group-hover:bg-primary/10'
+                        }`}>
+                          <method.icon className={`h-4 w-4 transition-colors ${
+                            method.status === 'coming'
+                              ? 'text-muted-foreground/50'
+                              : 'text-muted-foreground group-hover:text-primary'
+                          }`} />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-secondary-foreground group-hover:text-foreground transition-colors">{method.label}</p>
-                          <p className="text-xs text-muted-foreground">{method.desc}</p>
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-medium transition-colors ${
+                              method.status === 'coming'
+                                ? 'text-muted-foreground'
+                                : 'text-secondary-foreground group-hover:text-foreground'
+                            }`}>{method.label}</p>
+                            {method.status === 'coming' && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Coming Soon</span>
+                            )}
+                            {method.status === 'ready' && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">Live Now</span>
+                            )}
+                          </div>
+                          <p className={`text-xs ${method.status === 'coming' ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{method.desc}</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ArrowRight className={`h-4 w-4 ${method.status === 'coming' ? 'hidden' : 'text-muted-foreground opacity-0 group-hover:opacity-100'} transition-opacity`} />
                       </div>
                     </button>
                   ))}

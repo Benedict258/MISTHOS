@@ -7,10 +7,10 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adap
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
-import CreateInvoice from './pages/CreateInvoice';
-import InvoiceDetail from './pages/InvoiceDetail';
-import PayInvoice from './pages/PayInvoice';
+import Dashboard from './pages/DashboardPortfolio';
+import CreateInvoice from './pages/CreateInvoicePortfolio';
+import InvoiceDetail from './pages/InvoiceDetailPortfolio';
+import PayInvoice from './pages/PayInvoicePortfolio';
 import NotFound from './pages/NotFound';
 
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -19,6 +19,11 @@ const App = () => {
     const network = WalletAdapterNetwork.Devnet;
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
     const wallets = useMemo(() => [new SolflareWalletAdapter({ network }), new PhantomWalletAdapter()], [network]);
+
+    React.useEffect(() => {
+        const stored = window.localStorage.getItem('misthos:theme');
+        document.documentElement.classList.toggle('dark', stored !== 'light');
+    }, []);
 
     return (
         <ConnectionProvider endpoint={endpoint}>

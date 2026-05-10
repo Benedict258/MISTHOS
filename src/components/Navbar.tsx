@@ -4,6 +4,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Menu, X, FileText, LayoutDashboard, Zap } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';
+import ThemeToggle from './ThemeToggle';
 
 interface NavbarProps {
   variant?: 'landing' | 'app';
@@ -74,6 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ variant = 'landing' }) => {
                 Launch App
               </Link>
             )}
+            <ThemeToggle />
             <WalletMultiButton />
             
             {/* Mobile toggle */}

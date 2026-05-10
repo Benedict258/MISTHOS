@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { AnchorProvider } from '@coral-xyz/anchor';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import { Zap, Wallet, Globe, CreditCard, Link2, CheckCircle2, Shield, Clock, Download, ExternalLink, ArrowRight, Copy, Loader2 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import { DEMO_INVOICES, type Invoice, type InvoiceStatus } from '@/lib/constants';
@@ -14,25 +15,64 @@ import { formatErrorMessage, getTxExplorerLink, withRetry } from '@/lib/qa-utils
 type PaymentMethod = 'wallet' | 'crosschain' | 'card' | 'x402';
 type PaymentStage = 'select' | 'details' | 'processing' | 'confirming' | 'confirmed';
 
+type SharedInvoicePayload = {
+  invoiceAddress?: string;
+  invoiceId?: string;
+  clientName?: string;
+  clientEmail?: string;
+  description?: string;
+  lineItems?: Array<{ description: string; quantity: number; rate: number; amount: number }>;
+  amount?: number;
+  token?: string;
+  dueDate?: string;
+};
+
 const paymentMethods = [
-  { id: 'wallet' as const, label: 'Solana Wallet', icon: Wallet, desc: 'Pay with SOL or SPL tokens directly', status: 'ready' as const },
-  { id: 'crosschain' as const, label: 'Cross-Chain (LI.FI)', icon: Globe, desc: 'Pay from ETH, Base, Polygon, 60+ chains', status: 'coming' as const },
-  { id: 'card' as const, label: 'Card Payment', icon: CreditCard, desc: 'Visa/Mastercard — no wallet needed', status: 'coming' as const },
-  { id: 'x402' as const, label: 'x402 Link', icon: Link2, desc: 'HTTP-native one-click payment', status: 'coming' as const },
+  { id: 'wallet' as const, label: 'Solana Wallet', icon: Wallet, desc: 'Pay with SOL or SPL tokens directly' },
+  { id: 'crosschain' as const, label: 'Cross-Chain (LI.FI)', icon: Globe, desc: 'Pay from ETH, Base, Polygon, 60+ chains' },
+  { id: 'card' as const, label: 'Card Payment', icon: CreditCard, desc: 'Visa/Mastercard — no wallet needed' },
+  { id: 'x402' as const, label: 'x402 Link', icon: Link2, desc: 'HTTP-native one-click payment' },
 ];
 
 const PayInvoice: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
+  const location = useLocation();
   const { connection } = useConnection();
   const anchorWallet = useAnchorWallet();
   const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [stage, setStage] = useState<PaymentStage>('select');
-  const [txHash, setTxHash] = useState('5xKj8mPq...r9WnZ2v');
+  const [txHash, setTxHash] = useState('');
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [onChainInvoice, setOnChainInvoice] = useState<Invoice | null>(null);
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+
+  const sharedInvoice = useMemo<Invoice | null>(() => {
+    const params = new URLSearchParams(location.search);
+    const encoded = params.get('d');
+    if (!encoded) return null;
+
+    try {
+      const parsed = JSON.parse(decodeURIComponent(escape(window.atob(decodeURIComponent(encoded))))) as SharedInvoicePayload;
+      const amount = parsed.amount ?? 0;
+      return {
+        id: parsed.invoiceAddress || invoiceId || 'invoice',
+        clientName: parsed.clientName || 'Paying Client',
+        clientEmail: parsed.clientEmail || 'client@example.com',
+        description: parsed.description || 'Invoice payment',
+        lineItems: parsed.lineItems || [{ description: parsed.description || 'Invoice payment', quantity: 1, rate: amount, amount }],
+        amount,
+        token: parsed.token || 'SOL',
+        status: 'sent',
+        dueDate: parsed.dueDate || new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString().slice(0, 10),
+        creator: 'On-chain creator',
+      };
+    } catch {
+      return null;
+    }
+  }, [location.search, invoiceId]);
 
   const demoInvoice = DEMO_INVOICES.find((inv) => inv.id === invoiceId) || DEMO_INVOICES[1];
 
@@ -111,7 +151,7 @@ const PayInvoice: React.FC = () => {
     fetchOnChainInvoice();
   }, [sdk, onChainInvoiceAddress, toast]);
 
-  const invoice = onChainInvoice || demoInvoice;
+  const invoice = onChainInvoice || sharedInvoice || demoInvoice;
 
   // Mock wallet connection handler
   const handleWalletConnect = (wallet: string) => {
@@ -155,20 +195,43 @@ const PayInvoice: React.FC = () => {
   const handlePay = async () => {
     if (!selectedMethod) return;
 
-    // Guard: Only wallet method is real for hackathon demo
-    if (selectedMethod !== 'wallet') {
-      toast({
-        title: '🚀 Coming Soon',
-        description: `${paymentMethods.find(m => m.id === selectedMethod)?.label} launches next sprint. Core Solana wallet payment is live today.`,
-      });
-      return;
-    }
+    // All payment methods are clickable; route to method-specific handlers below
 
     if (onChainInvoiceAddress && sdk) {
       setIsPaying(true);
       setStage('processing');
       try {
-        const paymentMethodMap: Record<PaymentMethod, number> = {
+          // Ensure payer has an associated token account (ATA) for the invoice token mint.
+          try {
+            const invoiceResult = await sdk.fetchInvoice(onChainInvoiceAddress);
+            if (invoiceResult.success && invoiceResult.data) {
+              const tokenMint = invoiceResult.data.tokenMint;
+              const payerPub = anchorWallet?.publicKey;
+              if (payerPub) {
+                const ata = getAssociatedTokenAddressSync(tokenMint, payerPub);
+                const ataInfo = await connection.getAccountInfo(ata);
+                if (!ataInfo) {
+                  // create associated token account instruction and send transaction
+                  toast({ title: 'Creating token account', description: 'Creating associated token account for payment...' });
+                  const ix = createAssociatedTokenAccountInstruction(payerPub, ata, payerPub, tokenMint);
+                  const tx = new Transaction().add(ix);
+                  tx.feePayer = payerPub;
+                  const { blockhash } = await connection.getLatestBlockhash('confirmed');
+                  tx.recentBlockhash = blockhash;
+                  const signed = await (anchorWallet as any).signTransaction(tx);
+                  const raw = signed.serialize();
+                  const sig = await connection.sendRawTransaction(raw);
+                  await connection.confirmTransaction(sig, 'confirmed');
+                  toast({ title: 'Token account created', description: 'Associated token account created.' });
+                }
+              }
+            }
+          } catch (e) {
+            // non-fatal: proceed and let pay fail with clear error if needed
+            console.warn('ATA creation attempt failed', e);
+          }
+
+          const paymentMethodMap: Record<PaymentMethod, number> = {
           wallet: 0,
           crosschain: 1,
           card: 2,
@@ -252,7 +315,61 @@ const PayInvoice: React.FC = () => {
   };
 
   const handleDownloadReceipt = () => {
-    toast({ title: 'Receipt Downloaded', description: 'PDF proof receipt with on-chain data saved.' });
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      toast({ title: 'PDF Export Failed', description: 'Popup blocked. Allow popups and try again.' });
+      return;
+    }
+
+    const lineItemsHtml = invoice.lineItems
+      .map((item) => `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${item.description}</td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">${item.quantity}</td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">${item.rate}</td>
+          <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">${item.amount}</td>
+        </tr>`)
+      .join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>MISTHOS Invoice ${invoice.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+            .muted { color: #6b7280; }
+            .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+            table { width: 100%; border-collapse: collapse; }
+            th { text-align: left; border-bottom: 2px solid #d1d5db; padding: 8px; }
+          </style>
+        </head>
+        <body>
+          <h1>MISTHOS Invoice</h1>
+          <p class="muted">Public shareable invoice proof</p>
+          <div class="card">
+            <p><strong>Invoice:</strong> ${invoice.id}</p>
+            <p><strong>Client:</strong> ${invoice.clientName}</p>
+            <p><strong>Email:</strong> ${invoice.clientEmail}</p>
+            <p><strong>Description:</strong> ${invoice.description}</p>
+            <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
+          </div>
+          <div class="card">
+            <table>
+              <thead>
+                <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr>
+              </thead>
+              <tbody>${lineItemsHtml}</tbody>
+            </table>
+            <p style="text-align:right;"><strong>Total: ${invoice.amount} ${invoice.token}</strong></p>
+          </div>
+          <p class="muted">Open this page in browser and use Print → Save as PDF.</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 300);
+    toast({ title: 'PDF Ready', description: 'Use the browser print dialog to save as PDF.' });
   };
 
   // Payment method detail panels

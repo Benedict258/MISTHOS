@@ -1,5 +1,7 @@
-import React from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useConnection, useAnchorWallet, useWallet } from '@solana/wallet-adapter-react';
+import { AnchorProvider } from '@coral-xyz/anchor';
+import { PublicKey } from '@solana/web3.js';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
@@ -10,9 +12,74 @@ import RecentActivity from '@/components/dashboard/RecentActivity';
 import TopClients from '@/components/dashboard/TopClients';
 import PaymentVelocityChart from '@/components/dashboard/PaymentVelocityChart';
 import Footer from '@/components/Footer';
+import { type Invoice } from '@/lib/constants';
+import { MisthosSDK, getInvoiceStatusString } from '@/lib/misthos';
 
 const Dashboard: React.FC = () => {
   const { connected } = useWallet();
+  const { connection } = useConnection();
+  const anchorWallet = useAnchorWallet();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const sdk = useMemo(() => {
+    if (!anchorWallet) return null;
+    const provider = new AnchorProvider(connection, anchorWallet, {
+      commitment: 'confirmed',
+      preflightCommitment: 'confirmed',
+    });
+    return new MisthosSDK(provider);
+  }, [connection, anchorWallet]);
+
+  useEffect(() => {
+    const loadInvoices = async () => {
+      if (!sdk || !anchorWallet?.publicKey) return;
+
+      setLoading(true);
+      try {
+        const result = await sdk.fetchInvoicesByCreator(anchorWallet.publicKey);
+        if (!result.success || !result.data) return;
+
+        const mapped = result.data.map(({ publicKey, account }) => {
+          const statusRaw = getInvoiceStatusString(account.status);
+          const status = statusRaw === 'draft' || statusRaw === 'sent' || statusRaw === 'viewed' || statusRaw === 'paid' || statusRaw === 'settled' || statusRaw === 'disputed' || statusRaw === 'refunded'
+            ? statusRaw
+            : 'sent';
+          const decimals = account.tokenMint.toString() === 'So11111111111111111111111111111111111111112' ? 9 : 6;
+          const amount = Number(account.amount.toString()) / Math.pow(10, decimals);
+
+          return {
+            id: publicKey.toString(),
+            clientName: account.payer.toString().slice(0, 8) + '...' + account.payer.toString().slice(-4),
+            clientEmail: 'onchain@payer.local',
+            description: account.invoiceId,
+            lineItems: [
+              {
+                description: account.invoiceId,
+                quantity: 1,
+                rate: amount,
+                amount,
+              },
+            ],
+            amount,
+            token: account.tokenMint.toString() === 'So11111111111111111111111111111111111111112' ? 'SOL' : 'USDC',
+            status,
+            dueDate: new Date(Number(account.dueDate.toString()) * 1000).toISOString().slice(0, 10),
+            createdAt: new Date(Number(account.createdAt.toString()) * 1000).toISOString().slice(0, 10),
+            paidAt: Number(account.paidAt.toString()) > 0 ? new Date(Number(account.paidAt.toString()) * 1000).toISOString().slice(0, 10) : undefined,
+            creator: account.creator.toString(),
+            payer: account.payer.toString(),
+          } as Invoice;
+        });
+
+        setInvoices(mapped);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInvoices();
+  }, [sdk, anchorWallet?.publicKey]);
 
   if (!connected) {
     return (
@@ -51,6 +118,7 @@ const Dashboard: React.FC = () => {
         >
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Overview of your invoicing activity on Solana.</p>
+          {loading && <p className="text-xs text-muted-foreground mt-2">Loading on-chain invoice records...</p>}
         </motion.div>
 
         <div className="space-y-6">
@@ -64,7 +132,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Invoice Table */}
-          <InvoiceTable />
+          <InvoiceTable invoices={invoices} />
 
           {/* Recent Activity */}
           <RecentActivity />

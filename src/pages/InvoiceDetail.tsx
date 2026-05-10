@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Copy, ExternalLink, Download, Send, Zap, Clock, CheckCircle2, Mail, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -8,12 +8,51 @@ import Footer from '@/components/Footer';
 import { DEMO_INVOICES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 
+type SharedInvoicePayload = {
+  invoiceAddress?: string;
+  invoiceId?: string;
+  clientName?: string;
+  clientEmail?: string;
+  description?: string;
+  lineItems?: Array<{ description: string; quantity: number; rate: number; amount: number }>;
+  amount?: number;
+  token?: string;
+  dueDate?: string;
+};
+
 const InvoiceDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { toast } = useToast();
   const [showEmailPreview, setShowEmailPreview] = useState(false);
 
-  const invoice = DEMO_INVOICES.find((inv) => inv.id === id) || DEMO_INVOICES[0];
+  const invoice = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const encoded = params.get('d');
+    if (encoded) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(escape(window.atob(decodeURIComponent(encoded))))) as SharedInvoicePayload;
+        const amount = parsed.amount ?? 0;
+        return {
+          id: parsed.invoiceAddress || parsed.invoiceId || id || 'invoice',
+          clientName: parsed.clientName || 'Client',
+          clientEmail: parsed.clientEmail || 'client@example.com',
+          description: parsed.description || 'Invoice details',
+          lineItems: parsed.lineItems || [{ description: parsed.description || 'Invoice details', quantity: 1, rate: amount, amount }],
+          amount,
+          token: parsed.token || 'SOL',
+          status: 'sent' as const,
+          dueDate: parsed.dueDate || new Date().toISOString().slice(0, 10),
+          createdAt: new Date().toISOString().slice(0, 10),
+          creator: 'On-chain creator',
+        };
+      } catch {
+        // fall through
+      }
+    }
+
+    return DEMO_INVOICES.find((inv) => inv.id === id) || DEMO_INVOICES[0];
+  }, [id, location.search]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -33,7 +72,51 @@ const InvoiceDetail: React.FC = () => {
   };
 
   const handleDownloadPDF = () => {
-    toast({ title: 'PDF Downloaded', description: 'Invoice proof receipt with on-chain data saved.' });
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) {
+      toast({ title: 'PDF Export Failed', description: 'Popup blocked. Allow popups and try again.' });
+      return;
+    }
+
+    const rows = invoice.lineItems
+      .map(
+        (item) => `<tr><td>${item.description}</td><td style="text-align:right;">${item.quantity}</td><td style="text-align:right;">${item.rate}</td><td style="text-align:right;">${item.amount}</td></tr>`
+      )
+      .join('');
+
+    w.document.write(`
+      <html>
+        <head>
+          <title>MISTHOS Invoice ${invoice.id}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border-bottom: 1px solid #e5e7eb; padding: 8px; }
+            th { text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>MISTHOS Invoice</h1>
+          <p><strong>Invoice:</strong> ${invoice.id}</p>
+          <p><strong>Client:</strong> ${invoice.clientName}</p>
+          <p><strong>Email:</strong> ${invoice.clientEmail}</p>
+          <p><strong>Description:</strong> ${invoice.description}</p>
+          <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
+          <table>
+            <thead>
+              <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <p style="text-align:right;"><strong>Total: ${invoice.amount} ${invoice.token}</strong></p>
+          <p>Use browser print to save as PDF.</p>
+        </body>
+      </html>
+    `);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 250);
+    toast({ title: 'PDF Ready', description: 'Use browser print to save as PDF.' });
   };
 
   const canRelease = invoice.status === 'paid';

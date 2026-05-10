@@ -5,6 +5,7 @@ export type ToastActionElement = React.ReactElement;
 export type ToastProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  variant?: 'default' | 'destructive';
 };
 
 export type ToastItem = ToastProps & {
@@ -22,7 +23,7 @@ export const Toast: React.FC<{ toast: ToastItem; onDismiss: () => void }> = ({ t
   if (!toast.open) return null;
 
   return (
-    <div className="rounded-2xl border border-border bg-background p-4 shadow-xl backdrop-blur">
+    <div className={`rounded-2xl border bg-background p-4 shadow-xl backdrop-blur ${toast.variant === 'destructive' ? 'border-destructive/40' : 'border-border'}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           {toast.title ? <div className="font-semibold text-foreground">{toast.title}</div> : null}

@@ -415,8 +415,7 @@ pub struct PayInvoice<'info> {
     pub payer: Signer<'info>,
 
     #[account(
-        mut,
-        constraint = invoice_account.payer == payer.key() @ ErrorCode::Unauthorized
+        mut
     )]
     pub invoice_account: Account<'info, InvoiceAccount>,
 

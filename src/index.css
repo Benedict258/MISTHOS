@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,150 +6,172 @@
 
 @layer base {
   :root {
-    /* MISTHOS Dark Theme — Charcoal + Amber/Gold */
-    --background: 220 20% 4%;
-    --foreground: 40 10% 92%;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
 
-    --card: 220 18% 7%;
-    --card-foreground: 40 10% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 220 18% 7%;
-    --popover-foreground: 40 10% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 40 96% 56%;
-    --primary-foreground: 220 20% 4%;
+    --primary: 72 98% 74%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 220 14% 12%;
-    --secondary-foreground: 40 10% 80%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 14%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 46%;
 
-    --accent: 40 96% 56%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 14%;
-    --input: 220 14% 14%;
-    --ring: 40 96% 56%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 72 98% 74%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    /* Sidebar */
-    --sidebar-background: 220 18% 6%;
-    --sidebar-foreground: 40 10% 80%;
-    --sidebar-primary: 40 96% 56%;
-    --sidebar-primary-foreground: 220 20% 4%;
-    --sidebar-accent: 220 14% 12%;
-    --sidebar-accent-foreground: 40 10% 92%;
-    --sidebar-border: 220 14% 12%;
-    --sidebar-ring: 40 96% 56%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5% 26%;
+    --sidebar-primary: 240 6% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
 
-    /* MISTHOS Custom Tokens */
-    --amber: 40 96% 56%;
-    --amber-glow: 40 96% 64%;
-    --amber-dim: 40 60% 40%;
-    --surface: 220 18% 7%;
-    --surface-hover: 220 16% 10%;
-    --surface-raised: 220 16% 9%;
+    --status-draft: 215 16% 46%;
+    --status-sent: 199 89% 48%;
+    --status-paid: 142 72% 40%;
+    --status-overdue: 0 84% 55%;
+    --status-disputed: 32 95% 44%;
+    --status-settled: 142 72% 36%;
 
-    /* Status Colors */
-    --status-draft: 220 10% 50%;
-    --status-sent: 210 80% 56%;
-    --status-paid: 142 72% 50%;
-    --status-overdue: 0 72% 56%;
-    --status-disputed: 30 90% 56%;
-    --status-settled: 142 72% 42%;
-
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(40 96% 56%) 0%, hsl(35 92% 48%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220 20% 4%) 0%, hsl(220 24% 8%) 50%, hsl(220 20% 4%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(220 18% 8%) 0%, hsl(220 18% 6%) 100%);
-    --gradient-amber-glow: radial-gradient(ellipse at 50% 0%, hsl(40 96% 56% / 0.08) 0%, transparent 60%);
-    --gradient-subtle: linear-gradient(135deg, hsl(220 14% 10%) 0%, hsl(220 14% 8%) 100%);
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 8px 32px hsl(0 0% 0% / 0.5);
-    --shadow-amber: 0 0 40px hsl(40 96% 56% / 0.15);
-    --shadow-amber-sm: 0 0 20px hsl(40 96% 56% / 0.1);
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.2), 0 0 0 1px hsl(220 14% 14%);
-
-    /* Transitions */
-    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --surface: 0 0% 100%;
+    --surface-hover: 210 40% 96%;
+    --surface-raised: 0 0% 100%;
+    --shadow-card: 0 12px 32px hsl(222 47% 11% / 0.08);
+    --transition-fast: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-}
 
-@layer base {
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 222 47% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 222 47% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 72 98% 74%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 222 14% 14%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 222 14% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 222 14% 14%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 222 14% 20%;
+    --input: 222 14% 20%;
+    --ring: 72 98% 74%;
+
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 240 5% 90%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 222 47% 6%;
+    --sidebar-accent: 222 14% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 222 14% 20%;
+    --sidebar-ring: 72 98% 74%;
+
+    --surface: 222 47% 6%;
+    --surface-hover: 222 14% 14%;
+    --surface-raised: 222 37% 8%;
+    --shadow-card: 0 12px 32px hsl(0 0% 0% / 0.25);
+  }
+
   * {
     border-color: hsl(var(--border));
+    transition: var(--transition-fast);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: "Space Grotesk", "Manrope", system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
     letter-spacing: -0.02em;
   }
 
-  code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+  code,
+  pre,
+  .font-mono {
+    font-family: "JetBrains Mono", monospace;
   }
 }
 
 @layer components {
-  /* MISTHOS Wallet Button Override */
   .wallet-adapter-button {
     background: hsl(var(--secondary)) !important;
     border: 1px solid hsl(var(--border)) !important;
-    border-radius: var(--radius) !important;
+    border-radius: 9999px !important;
     color: hsl(var(--foreground)) !important;
-    font-family: 'Inter', system-ui, sans-serif !important;
+    font-family: "Space Grotesk", system-ui, sans-serif !important;
     font-size: 0.875rem !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     height: 40px !important;
     padding: 0 16px !important;
-    transition: var(--transition-fast) !important;
   }
 
   .wallet-adapter-button:hover {
     background: hsl(var(--surface-hover)) !important;
-    border-color: hsl(var(--amber) / 0.3) !important;
+    border-color: hsl(var(--primary) / 0.45) !important;
   }
 
   .wallet-adapter-button-trigger {
-    background: var(--gradient-primary) !important;
+    background: hsl(var(--primary)) !important;
     border: none !important;
     color: hsl(var(--primary-foreground)) !important;
-    font-weight: 600 !important;
-    box-shadow: var(--shadow-amber-sm) !important;
-  }
-
-  .wallet-adapter-button-trigger:hover {
-    opacity: 0.9 !important;
-    box-shadow: var(--shadow-amber) !important;
+    box-shadow: 0 12px 28px hsl(var(--primary) / 0.18) !important;
   }
 
   .wallet-adapter-modal-wrapper {
     background: hsl(var(--card)) !important;
     border: 1px solid hsl(var(--border)) !important;
-    border-radius: calc(var(--radius) * 2) !important;
+    border-radius: 1.5rem !important;
   }
 
   .wallet-adapter-modal-title {
     color: hsl(var(--foreground)) !important;
-    font-family: 'Inter', system-ui, sans-serif !important;
+    font-family: "Space Grotesk", system-ui, sans-serif !important;
   }
 
   .wallet-adapter-modal-list li {
@@ -157,28 +179,16 @@
     border-radius: var(--radius) !important;
   }
 
-  .wallet-adapter-modal-list li:hover {
-    background: hsl(var(--surface-hover)) !important;
-  }
-
-  .wallet-adapter-modal-button-close {
-    background: hsl(var(--secondary)) !important;
-  }
-
   .wallet-adapter-modal-overlay {
     background: hsl(0 0% 0% / 0.7) !important;
   }
 
-  /* Glow text */
-  .text-glow {
-    text-shadow: 0 0 30px hsl(var(--amber) / 0.4);
-  }
-
-  /* Glass card */
   .glass-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) * 1.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: hsl(var(--background) / 0.8);
+    border: 1px solid hsl(var(--border) / 0.85);
+    border-radius: 1.5rem;
     box-shadow: var(--shadow-card);
   }
 
@@ -186,73 +196,47 @@
     transition: var(--transition-smooth);
   }
 
-  .glass-card-hover:hover {
-    border-color: hsl(var(--amber) / 0.2);
-    box-shadow: var(--shadow-card), var(--shadow-amber-sm);
-    transform: translateY(-1px);
+  @media (prefers-reduced-motion: no-preference) {
+    .glass-card-hover:hover {
+      border-color: hsl(var(--primary) / 0.35);
+      transform: translateY(-1px);
+    }
   }
 
-  /* Status badges */
   .badge-draft {
-    background: hsl(var(--status-draft) / 0.15);
+    background: hsl(var(--status-draft) / 0.12);
     color: hsl(var(--status-draft));
     border: 1px solid hsl(var(--status-draft) / 0.2);
   }
 
   .badge-sent {
-    background: hsl(var(--status-sent) / 0.15);
+    background: hsl(var(--status-sent) / 0.12);
     color: hsl(var(--status-sent));
     border: 1px solid hsl(var(--status-sent) / 0.2);
   }
 
   .badge-paid {
-    background: hsl(var(--status-paid) / 0.15);
+    background: hsl(var(--status-paid) / 0.12);
     color: hsl(var(--status-paid));
     border: 1px solid hsl(var(--status-paid) / 0.2);
   }
 
   .badge-overdue {
-    background: hsl(var(--status-overdue) / 0.15);
+    background: hsl(var(--status-overdue) / 0.12);
     color: hsl(var(--status-overdue));
     border: 1px solid hsl(var(--status-overdue) / 0.2);
   }
 
   .badge-disputed {
-    background: hsl(var(--status-disputed) / 0.15);
+    background: hsl(var(--status-disputed) / 0.12);
     color: hsl(var(--status-disputed));
     border: 1px solid hsl(var(--status-disputed) / 0.2);
   }
 
   .badge-settled {
-    background: hsl(var(--status-settled) / 0.15);
+    background: hsl(var(--status-settled) / 0.12);
     color: hsl(var(--status-settled));
     border: 1px solid hsl(var(--status-settled) / 0.2);
-  }
-
-  /* Ambient glow background */
-  .amber-glow-bg {
-    position: relative;
-  }
-
-  .amber-glow-bg::before {
-    content: '';
-    position: absolute;
-    top: -20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 40%;
-    background: radial-gradient(ellipse, hsl(var(--amber) / 0.06) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Grid pattern for backgrounds */
-  .grid-pattern {
-    background-image: 
-      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
-    background-size: 60px 60px;
   }
 }
 
@@ -264,23 +248,16 @@
   .animate-slide-up {
     animation: slideUp 0.6s ease-out forwards;
   }
+}
 
-  .animate-pulse-glow {
-    animation: pulseGlow 3s ease-in-out infinite;
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-}
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px hsl(40 96% 56% / 0.1); }
-  50% { box-shadow: 0 0 40px hsl(40 96% 56% / 0.2); }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }

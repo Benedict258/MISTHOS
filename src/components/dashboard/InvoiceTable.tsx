@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { Invoice } from '@/lib/constants';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ExternalLink, Search, Filter, Plus } from 'lucide-react';
@@ -9,11 +10,21 @@ const DEVNET_EXPLORER = 'https://explorer.solana.com';
 
 const filterOptions: (InvoiceStatus | 'all')[] = ['all', 'draft', 'sent', 'paid', 'settled', 'overdue', 'disputed'];
 
-const InvoiceTable: React.FC = () => {
+const getPaymentState = (status: InvoiceStatus) => {
+  if (status === 'paid') return { label: 'In Escrow', className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' };
+  if (status === 'settled') return { label: 'Verified', className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' };
+  if (status === 'disputed') return { label: 'Verifying', className: 'bg-blue-500/10 text-blue-500 border-blue-500/20' };
+  if (status === 'refunded') return { label: 'Refunded', className: 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
+  return { label: 'Not Paid', className: 'bg-rose-500/10 text-rose-500 border-rose-500/20' };
+};
+
+const InvoiceTable: React.FC<{ invoices?: Invoice[] }> = ({ invoices }) => {
   const [filter, setFilter] = useState<InvoiceStatus | 'all'>('all');
   const [search, setSearch] = useState('');
 
-  const filtered = DEMO_INVOICES.filter((inv) => {
+  const source = invoices && invoices.length ? invoices : DEMO_INVOICES;
+
+  const filtered = source.filter((inv) => {
     if (filter !== 'all' && inv.status !== filter) return false;
     if (search && !inv.clientName.toLowerCase().includes(search.toLowerCase()) && !inv.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -75,6 +86,7 @@ const InvoiceTable: React.FC = () => {
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3 hidden sm:table-cell">Amount</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3 hidden md:table-cell">Due Date</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3">Status</th>
+              <th className="text-left text-xs font-medium text-muted-foreground px-5 py-3">Payment State</th>
               <th className="text-center text-xs font-medium text-muted-foreground px-5 py-3">Proof</th>
               <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3"></th>
             </tr>
@@ -110,6 +122,11 @@ const InvoiceTable: React.FC = () => {
                 <td className="px-5 py-3.5">
                   <StatusBadge status={inv.status} />
                 </td>
+                <td className="px-5 py-3.5">
+                  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${getPaymentState(inv.status).className}`}>
+                    {getPaymentState(inv.status).label}
+                  </span>
+                </td>
                 <td className="px-5 py-3.5 text-center">
                   {inv.txHash ? (
                     <a
@@ -138,7 +155,7 @@ const InvoiceTable: React.FC = () => {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-muted-foreground">
                   No invoices found.
                 </td>
               </tr>

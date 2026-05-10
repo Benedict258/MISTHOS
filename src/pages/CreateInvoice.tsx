@@ -10,7 +10,7 @@ import Navbar from '@/components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { MisthosSDK } from '@/lib/misthos';
-import { formatErrorMessage, getTxExplorerLink, withRetry } from '@/lib/qa-utils';
+import { formatErrorMessage, withRetry } from '@/lib/qa-utils';
 
 const TOKEN_MINTS: Record<string, string> = {
   USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
@@ -23,6 +23,9 @@ const TOKEN_DECIMALS: Record<string, number> = {
   USDT: 6,
   SOL: 9,
 };
+
+const encodeSharePayload = (payload: unknown) =>
+  encodeURIComponent(window.btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
 
 interface LineItem {
   description: string;
@@ -98,6 +101,7 @@ const CreateInvoice: React.FC = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
 
   const sdk = React.useMemo(() => {
     if (!anchorWallet) return null;
@@ -263,6 +267,24 @@ const CreateInvoice: React.FC = () => {
         throw new Error(sendResult.error || 'Invoice created but failed to send');
       }
 
+      const sharePayload = {
+        invoiceAddress: createResult.data.invoiceAddress,
+        invoiceId,
+        clientName,
+        clientEmail,
+        description: notes || lineItems.map((item) => item.description).join(' | '),
+        lineItems: lineItems.map((item) => ({
+          description: item.description,
+          quantity: Number(item.quantity) || 0,
+          rate: Number(item.rate) || 0,
+          amount: (Number(item.quantity) || 0) * (Number(item.rate) || 0),
+        })),
+        amount: total,
+        token,
+        dueDate: dueDate || new Date(dueTimestamp * 1000).toISOString().slice(0, 10),
+      };
+      const shareLink = `${window.location.origin}/pay/${createResult.data.invoiceAddress}?d=${encodeSharePayload(sharePayload)}`;
+
       // Fire-and-forget email (do not block on failure)
       fetch('/api/email/send', {
         method: 'POST',
@@ -275,21 +297,20 @@ const CreateInvoice: React.FC = () => {
             <p>You have a new invoice on Misthos.</p>
             <p><strong>Amount:</strong> ${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${token}</p>
             <p><strong>Due Date:</strong> ${dueDate || 'N/A'}</p>
-            <p>Pay here: <a href="${window.location.origin}/pay/${createResult.data.invoiceAddress}">${window.location.origin}/pay/${createResult.data.invoiceAddress}</a></p>
+            <p>Pay here: <a href="${shareLink}">${shareLink}</a></p>
             <p>Regards,<br/>Misthos</p>
           `,
         }),
       }).catch(() => undefined);
 
-      // Show success with clickable explorer link for tx signature
-      const txLink = getTxExplorerLink(createResult.data.signature);
+      setShareUrl(shareLink);
       toast({
         title: 'Invoice Created On-Chain',
-        description: `View transaction: ${createResult.data.signature.slice(0, 12)}...`,
+        description: `Share link ready: ${shareLink}`,
       });
 
       // Redirect to payment page after brief delay for user to see toast
-      setTimeout(() => navigate(`/pay/${createResult.data.invoiceAddress}`), 1200);
+      setTimeout(() => navigate(`/pay/${createResult.data.invoiceAddress}?d=${encodeSharePayload(sharePayload)}`), 1200);
     } catch (error) {
       const friendlyMsg = formatErrorMessage(error);
       toast({
@@ -343,6 +364,36 @@ const CreateInvoice: React.FC = () => {
           <h1 className="text-2xl font-bold text-foreground mb-1">Create Invoice</h1>
           <p className="text-sm text-muted-foreground mb-8">Fill in the details, use AI to draft from a description, or speak your invoice.</p>
         </motion.div>
+
+        {shareUrl && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card p-4 mb-6 border-primary/20"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">Invoice link ready</p>
+                <p className="text-xs text-muted-foreground break-all">{shareUrl}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={shareUrl}
+                  className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-amber-sm hover:opacity-90 transition-opacity"
+                >
+                  Open Invoice
+                </a>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(shareUrl)}
+                  className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary transition-colors"
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* AI Draft Section */}
         <motion.div

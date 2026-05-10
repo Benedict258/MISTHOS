@@ -9,6 +9,7 @@ export const DEVNET_EXPLORER = 'https://explorer.solana.com';
  * Generate Devnet explorer link for transaction
  */
 export function getTxExplorerLink(txSignature: string): string {
+  if (!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(txSignature) || txSignature.startsWith('demo-')) return '';
   return `${DEVNET_EXPLORER}/tx/${txSignature}?cluster=devnet`;
 }
 

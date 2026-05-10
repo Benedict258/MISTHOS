@@ -14,11 +14,11 @@ interface ActivityItem {
 }
 
 const activityData: ActivityItem[] = [
-  { id: '1', type: 'paid', invoiceId: 'INV-001', client: 'Sarah Chen', amount: 7500, token: 'USDC', time: '2 days ago', txHash: '4zKj...9xRm' },
+  { id: '1', type: 'paid', invoiceId: 'INV-001', client: 'Sarah Chen', amount: 7500, token: 'USDC', time: '2 days ago' },
   { id: '2', type: 'sent', invoiceId: 'INV-002', client: 'David Park', amount: 4800, token: 'USDC', time: '2 days ago' },
   { id: '3', type: 'overdue', invoiceId: 'INV-003', client: 'Lena Morales', amount: 3200, token: 'SOL', time: '10 days ago' },
   { id: '4', type: 'created', invoiceId: 'INV-004', client: 'Marcus Webb', amount: 9000, token: 'USDC', time: 'Today' },
-  { id: '5', type: 'settled', invoiceId: 'INV-005', client: 'Yuki Tanaka', amount: 5500, token: 'USDC', time: '20 days ago', txHash: '7mXp...2kLn' },
+  { id: '5', type: 'settled', invoiceId: 'INV-005', client: 'Yuki Tanaka', amount: 5500, token: 'USDC', time: '20 days ago' },
 ];
 
 const typeConfig = {

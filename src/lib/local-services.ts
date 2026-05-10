@@ -51,37 +51,63 @@ export type PdfReceiptParams = {
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const cleanText = (value: string) => value.trim().replace(/\s+/g, ' ');
+const titleCase = (value: string) =>
+  cleanText(value)
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+const addDays = (days: number) => {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + days);
+  return dueDate.toISOString().slice(0, 10);
+};
 
 export function draftInvoiceFromText(text: string): DraftInvoice {
-  const prompt = buildInvoicePrompt(text);
-  const hoursMatch = text.match(/(\d+)\s*hours?/i);
-  const rateMatch = text.match(/\$?([\d,]+(?:\.\d+)?)(?:\s*(?:per hour|\/hr|hr))?/i);
-  const clientMatch = text.match(/invoice\s+([^,]+?)\s+for/i);
-  const dueMatch = text.match(/due\s+in\s+(\d+)\s*days?/i);
+  buildInvoicePrompt(text);
+  const normalized = cleanText(text);
+  const hoursMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
+  const rateMatch =
+    normalized.match(/(?:at|rate(?:\s+of)?|for)\s*(?:\$|usd\s*)?([\d,]+(?:\.\d+)?)\s*(?:\/\s*(?:hr|hour)|per\s+hour|an?\s+hour|hourly)/i) ||
+    normalized.match(/(?:\$|usd\s*)([\d,]+(?:\.\d+)?)\s*(?:\/\s*(?:hr|hour)|per\s+hour|an?\s+hour|hourly)/i);
+  const totalMatch =
+    normalized.match(/(?:total|amount|for)\s*(?:of\s*)?(?:\$|usd\s*)?([\d,]+(?:\.\d+)?)\s*(?:usdc|usd|sol)?\b/i);
+  const clientMatch =
+    normalized.match(/invoice\s+(.+?)\s+for\s+/i) ||
+    normalized.match(/bill\s+(.+?)\s+for\s+/i) ||
+    normalized.match(/client\s+(.+?)(?:\s+for|,|$)/i);
+  const dueMatch = normalized.match(/due\s+in\s+(\d+)\s*days?/i);
+  const currencyMatch = normalized.match(/\b(USDC|USDT|SOL|USD)\b/i);
 
-  const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : null;
+  const hours = hoursMatch ? parseFloat(hoursMatch[1]) : null;
   const rate = rateMatch ? parseFloat(rateMatch[1].replace(/,/g, '')) : null;
-  const total = hours != null && rate != null ? Math.round(hours * rate * 100) / 100 : null;
+  const explicitTotal = totalMatch ? parseFloat(totalMatch[1].replace(/,/g, '')) : null;
+  const total = hours != null && rate != null ? Math.round(hours * rate * 100) / 100 : explicitTotal;
   const dueOffset = dueMatch ? parseInt(dueMatch[1], 10) : 14;
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + dueOffset);
-
-  const service = text;
-  const client = clientMatch ? cleanText(clientMatch[1]) : null;
+  const client = clientMatch ? titleCase(clientMatch[1].replace(/^for\s+/i, '')) : null;
+  const service = normalized
+    .replace(/^invoice\s+.+?\s+for\s+/i, '')
+    .replace(/^bill\s+.+?\s+for\s+/i, '')
+    .replace(/,\s*due\s+in\s+\d+\s*days?.*$/i, '')
+    .replace(/\s+due\s+in\s+\d+\s*days?.*$/i, '');
+  const description = service || normalized;
+  const quantity = hours || 1;
+  const unitRate = rate || (total ? total / quantity : 0);
 
   return {
     client,
-    service,
+    service: description,
     hours,
     rate,
     total,
-    currency: 'USDC',
-    due_date: dueDate.toISOString().slice(0, 10),
+    currency: currencyMatch?.[1]?.toUpperCase() || 'USDC',
+    due_date: addDays(dueOffset),
     line_items: [
       {
-        description: cleanText(text),
-        qty: hours || 1,
-        rate: rate || 0,
+        description,
+        qty: quantity,
+        rate: Math.round(unitRate * 100) / 100,
         amount: total || 0,
       },
     ],

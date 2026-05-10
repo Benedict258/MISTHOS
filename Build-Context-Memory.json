@@ -1251,6 +1251,122 @@
                              "Update README and submission artifacts to match actual implemented scope"
                          ],
                          "notes": "Dependency and build blockers are resolved; project is ready for browser smoke tests, with known scope gaps documented against the hackathon dev plan and PRD."
+                     },
+                     {
+                         "session_id": "session_020",
+                         "timestamp": "2026-05-10T00:00:00Z",
+                         "ai_agent": "Codex",
+                         "current_phase": "portfolio_supabase_invoice_flow",
+                         "progress": {
+                             "completed": [
+                                 "Read docs, project memory, and the referenced BenedictIsaac portfolio invoice implementation",
+                                 "Ported portfolio-inspired theme tokens, glass-card styling, and light/dark mode toggle into the active Vite app",
+                                 "Added Supabase-backed invoice store with local fallback for fresh blank accounts, invoice records, receipt uploads, and activity events",
+                                 "Restored local-first AI invoice drafting so prompt parsing works without the broken Next API route",
+                                 "Extended active invoice fields with company, billing address, payment terms, payment reference, tax, discount, footer note, payout wallet, and receipt metadata",
+                                 "Changed wallet payments to transfer directly to the creator payout wallet and mark confirmed payments as verified",
+                                 "Rejected shortened/demo transaction signatures when building Solana Explorer URLs",
+                                 "Verified production build passes with yarn build"
+                             ],
+                             "in_progress": [
+                                 "Browser smoke testing with connected wallets on Devnet",
+                                 "Optional real integrations for cross-chain, card, and x402 payment providers"
+                             ],
+                             "blocked": []
+                         },
+                         "last_session_summary": "Session_019 resolved dependency/build blockers with yarn and identified remaining mock payment/API gaps.",
+                         "changes_made": [
+                             "Created src/lib/invoice-store.ts for Supabase/local invoice persistence and receipt uploads",
+                             "Created active portfolio pages: DashboardPortfolio, CreateInvoicePortfolio, PayInvoicePortfolio, InvoiceDetailPortfolio",
+                             "Added ThemeToggle and missing UI primitives for active pages",
+                             "Updated App and Navbar to use the portfolio flow and theme toggle",
+                             "Updated local AI drafting parser, explorer link validation, and Supabase schema"
+                         ],
+                         "file_module_map": [
+                             {
+                                 "file": "src/lib/invoice-store.ts",
+                                 "purpose": "Supabase/local source of truth for invoices, receipts, events, payment states, and explorer link validation",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             },
+                             {
+                                 "file": "src/pages/CreateInvoicePortfolio.tsx",
+                                 "purpose": "Portfolio-style invoice creation with AI drafting, expanded fields, creator payout wallet, and share links",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             },
+                             {
+                                 "file": "src/pages/PayInvoicePortfolio.tsx",
+                                 "purpose": "Public invoice payment page with direct wallet transfer to creator payout wallet and receipt-proof upload for non-wallet methods",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             },
+                             {
+                                 "file": "src/pages/DashboardPortfolio.tsx",
+                                 "purpose": "Blank-first Supabase invoice dashboard with status, activity, clients, receipts, and explorer gating",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             },
+                             {
+                                 "file": "src/index.css",
+                                 "purpose": "Portfolio-inspired light/dark global theme and wallet adapter styling",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             },
+                             {
+                                 "file": "supabase/schema.sql",
+                                 "purpose": "Supabase tables for invoices, invoice_items, invoice_events, and receipt storage notes",
+                                 "last_modified": "2026-05-10T00:00:00Z"
+                             }
+                         ],
+                         "decisions_log": [
+                             {
+                                 "decision": "Use Supabase as the preferred source of truth with localStorage fallback",
+                                 "reason": "User requested fresh accounts to start blank while still allowing the MVP to function when Supabase env vars are not configured",
+                                 "alternatives_considered": "Pure localStorage demo data or requiring a backend before the UI works"
+                             },
+                             {
+                                 "decision": "Do not redeploy the Solana program for explorer link issues",
+                                 "reason": "The bad links were caused by storing shortened/demo signatures in frontend data; validation now only emits explorer links for full base58 signatures",
+                                 "alternatives_considered": "Redeploying the contract without evidence of an on-chain bug"
+                             },
+                             {
+                                 "decision": "Treat escrow as optional and route wallet payments directly to the creator payout wallet",
+                                 "reason": "User requested paid invoices to go to the wallet address that created the invoice",
+                                 "alternatives_considered": "Continue forcing the escrow release flow for all wallet payments"
+                             }
+                         ],
+                         "known_issues": [
+                             {
+                                 "issue": "src/pages/api still contains Next.js API handlers in a Vite app and is not served by Vite",
+                                 "severity": "high",
+                                 "status": "open"
+                             },
+                             {
+                                 "issue": "Full TypeScript project check still reports pre-existing unused old pages and Anchor SDK typing errors, though yarn build passes",
+                                 "severity": "medium",
+                                 "status": "open"
+                             },
+                             {
+                                 "issue": "Cross-chain, card, and x402 methods are clickable receipt/proof flows, not provider-integrated payment rails",
+                                 "severity": "medium",
+                                 "status": "open"
+                             }
+                         ],
+                         "errors_encountered": [
+                             {
+                                 "error": "Missing Vite env typings for import.meta.env",
+                                 "context": "Checking active Supabase invoice store changes",
+                                 "resolution": "Added src/vite-env.d.ts"
+                             },
+                             {
+                                 "error": "Missing local UI primitives for active portfolio pages",
+                                 "context": "Running yarn build after importing Badge/Button/Input/Textarea",
+                                 "resolution": "Added the missing UI component files"
+                             }
+                         ],
+                         "next_steps": [
+                             "Configure VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, and a public receipts bucket, then run the schema in supabase/schema.sql",
+                             "Smoke test create invoice -> open public link -> wallet pay on Devnet -> dashboard/detail verification",
+                             "Decide whether to remove or migrate old Next API handlers and legacy pages so full tsc can pass",
+                             "Wire real LI.FI/card/x402 providers if those tracks must be production-functional"
+                         ],
+                         "notes": "Production build passes. The active MVP now has Supabase-backed invoices and receipts, portfolio UI, working local AI drafting, direct creator-wallet payment, and guarded Explorer links."
                      }
                  ]
 }

@@ -99,6 +99,18 @@ export const DEMO_INVOICES: Invoice[] = [
   },
 ];
 
+export const TOKEN_MINTS: Record<string, string> = {
+  SOL: 'So11111111111111111111111111111111111111112',
+  USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+};
+
+export const TOKEN_DECIMALS: Record<string, number> = {
+  SOL: 9,
+  USDC: 6,
+  USDT: 6,
+};
+
 export const STATUS_LABELS: Record<InvoiceStatus, string> = {
   draft: 'Draft',
   sent: 'Sent',
@@ -109,3 +121,8 @@ export const STATUS_LABELS: Record<InvoiceStatus, string> = {
   overdue: 'Overdue',
   refunded: 'Refunded',
 };
+
+// Placeholder payer address used when creating invoices.
+// The smart contract requires payer != creator, so we use this
+// until the actual payer connects their wallet to pay.
+export const UNKNOWN_PAYER_ADDRESS = '11111111111111111111111111111111';

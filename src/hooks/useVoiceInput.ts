@@ -74,7 +74,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (err) {
+    } catch {
       setError('Microphone access denied. Please allow microphone permissions.');
     }
   }, []);

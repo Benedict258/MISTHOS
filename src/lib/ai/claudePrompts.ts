@@ -26,13 +26,6 @@ export function buildInvoicePrompt(description: string) {
   return invoiceDraftTemplate.replace('{{DESCRIPTION}}', description.replace(/"/g, '\\"'));
 }
 
-export const reminderAgentTemplate = `You are a reminder agent. Given an invoice object (JSON) and the current timestamp, decide whether a reminder email should be sent and produce a short, friendly reminder message. Output JSON: { send: true|false, message: "" }`;
-
-export function buildReminderPrompt(invoiceJson: string) {
-  return reminderAgentTemplate + '\n\nInvoice: ' + invoiceJson;
-}
-
 export default {
   buildInvoicePrompt,
-  buildReminderPrompt,
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Activity, ArrowUpRight, Copy, ExternalLink, FileText, Loader2, Plus, Shield, Wallet, CheckCircle2, Clock3 } from 'lucide-react';
@@ -35,7 +35,7 @@ const DashboardPortfolio: React.FC = () => {
   const [topClients, setTopClients] = useState<Awaited<ReturnType<typeof getTopClients>>>([]);
   const [activity, setActivity] = useState<Awaited<ReturnType<typeof getActivityFeed>>>([]);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const [invoiceRows, statRows, clientRows, feedRows] = await Promise.all([
@@ -53,11 +53,11 @@ const DashboardPortfolio: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   const blankState = !loading && invoices.length === 0;
   const explorerable = (signature?: string) => isFullSignature(signature);

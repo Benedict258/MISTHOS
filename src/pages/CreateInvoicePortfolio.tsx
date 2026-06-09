@@ -18,19 +18,8 @@ import { formatErrorMessage, getTxExplorerLink, withRetry } from '@/lib/qa-utils
 import { MisthosSDK } from '@/lib/misthos';
 import { draftInvoiceFromText } from '@/lib/local-services';
 import { recordInvoiceEvent, saveInvoiceRecord, type StoredInvoice } from '@/lib/invoice-store';
-import { APP_NAME, type LineItem } from '@/lib/constants';
-
-const TOKEN_MINTS: Record<string, string> = {
-  USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
-  USDT: 'Es9vMFrzaCERmJfrF4H2wF7v4YfLhM1cBh73PvvrLpzT',
-  SOL: 'So11111111111111111111111111111111111111112',
-};
-
-const TOKEN_DECIMALS: Record<string, number> = {
-  USDC: 6,
-  USDT: 6,
-  SOL: 9,
-};
+import { APP_NAME, TOKEN_MINTS, TOKEN_DECIMALS, UNKNOWN_PAYER_ADDRESS, type LineItem } from '@/lib/constants';
+import { signPayload } from '@/lib/hmac';
 
 const encodeSharePayload = (payload: unknown) =>
   encodeURIComponent(window.btoa(unescape(encodeURIComponent(JSON.stringify(payload)))));
@@ -229,7 +218,7 @@ const CreateInvoicePortfolio: React.FC = () => {
           const createResult = await withRetry(
             () => sdk.createInvoice({
               invoiceId,
-              payer: anchorWallet.publicKey,
+              payer: new PublicKey(UNKNOWN_PAYER_ADDRESS),
               amount: amountInMinorUnits,
               tokenMint: tokenMintKey,
               dueDate: Math.floor(new Date(`${due}T00:00:00Z`).getTime() / 1000),
@@ -274,7 +263,15 @@ const CreateInvoicePortfolio: React.FC = () => {
         paymentReference,
         footerNote,
       };
-      const shareLink = `${window.location.origin}/pay/${publicId}?d=${encodeSharePayload(sharePayload)}`;
+      let signature = '';
+      try {
+        signature = await signPayload(sharePayload as Record<string, unknown>);
+      } catch {
+        // HMAC signing is optional; proceed without signature if server is unavailable
+      }
+      const shareLink = signature
+        ? `${window.location.origin}/pay/${publicId}?d=${encodeSharePayload(sharePayload)}&sig=${encodeURIComponent(signature)}`
+        : `${window.location.origin}/pay/${publicId}?d=${encodeSharePayload(sharePayload)}`;
 
       const record: StoredInvoice = {
         publicId,
@@ -330,7 +327,10 @@ const CreateInvoicePortfolio: React.FC = () => {
       });
 
       window.setTimeout(() => {
-        navigate(`/pay/${publicId}?d=${encodeSharePayload(sharePayload)}`);
+        const navUrl = signature
+          ? `/pay/${publicId}?d=${encodeSharePayload(sharePayload)}&sig=${encodeURIComponent(signature)}`
+          : `/pay/${publicId}?d=${encodeSharePayload(sharePayload)}`;
+        navigate(navUrl);
       }, 1200);
     } catch (error) {
       toast({

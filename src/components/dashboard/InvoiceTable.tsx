@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ExternalLink, Search, Filter, Plus } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
-import { DEMO_INVOICES, type InvoiceStatus } from '@/lib/constants';
+import { type InvoiceStatus } from '@/lib/constants';
 
 const DEVNET_EXPLORER = 'https://explorer.solana.com';
 
@@ -22,9 +22,7 @@ const InvoiceTable: React.FC<{ invoices?: Invoice[] }> = ({ invoices }) => {
   const [filter, setFilter] = useState<InvoiceStatus | 'all'>('all');
   const [search, setSearch] = useState('');
 
-  const source = invoices && invoices.length ? invoices : DEMO_INVOICES;
-
-  const filtered = source.filter((inv) => {
+  const filtered = (invoices || []).filter((inv) => {
     if (filter !== 'all' && inv.status !== filter) return false;
     if (search && !inv.clientName.toLowerCase().includes(search.toLowerCase()) && !inv.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;

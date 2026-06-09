@@ -136,12 +136,29 @@ export async function sendInvoiceEmail(params: EmailSendParams): Promise<{ succe
   };
 }
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export function generateInvoiceReceiptHtml(params: PdfReceiptParams): string {
+  const safeInvoiceId = escapeHtml(params.invoiceId);
+  const safeDescription = escapeHtml(params.description);
+  const safeCreatorName = escapeHtml(params.creatorName);
+  const safePayerName = escapeHtml(params.payerName);
+  const safeDueDate = escapeHtml(params.dueDate);
+  const safeStatus = escapeHtml(params.status);
+  const safePaymentDate = params.paymentDate ? escapeHtml(params.paymentDate) : '';
+  const safeCurrency = escapeHtml(params.currency);
+
   return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Invoice ${params.invoiceId}</title>
+<title>Invoice ${safeInvoiceId}</title>
 <style>
   body { font-family: Inter, system-ui, sans-serif; padding: 32px; color: #111827; }
   .card { max-width: 720px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 20px; padding: 24px; }
@@ -153,14 +170,14 @@ export function generateInvoiceReceiptHtml(params: PdfReceiptParams): string {
 <body>
   <div class="card">
     <div class="muted">Misthos Receipt</div>
-    <h1>Invoice ${params.invoiceId}</h1>
-    <p>${params.description}</p>
-    <div class="amount">${params.amount.toFixed(2)} ${params.currency}</div>
-    <div class="row"><span class="muted">Creator</span><span>${params.creatorName}</span></div>
-    <div class="row"><span class="muted">Payer</span><span>${params.payerName}</span></div>
-    <div class="row"><span class="muted">Due Date</span><span>${params.dueDate}</span></div>
-    <div class="row"><span class="muted">Status</span><span>${params.status}</span></div>
-    ${params.paymentDate ? `<div class="row"><span class="muted">Payment Date</span><span>${params.paymentDate}</span></div>` : ''}
+    <h1>Invoice ${safeInvoiceId}</h1>
+    <p>${safeDescription}</p>
+    <div class="amount">${params.amount.toFixed(2)} ${safeCurrency}</div>
+    <div class="row"><span class="muted">Creator</span><span>${safeCreatorName}</span></div>
+    <div class="row"><span class="muted">Payer</span><span>${safePayerName}</span></div>
+    <div class="row"><span class="muted">Due Date</span><span>${safeDueDate}</span></div>
+    <div class="row"><span class="muted">Status</span><span>${safeStatus}</span></div>
+    ${safePaymentDate ? `<div class="row"><span class="muted">Payment Date</span><span>${safePaymentDate}</span></div>` : ''}
   </div>
 </body>
 </html>`;

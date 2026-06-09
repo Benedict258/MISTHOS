@@ -1,16 +1,16 @@
 /**
  * Utility functions for Phase 4 QA & Polish
- * Handles Devnet explorer links, error formatting, and RPC retries
+ * Handles explorer links, error formatting, and RPC retries
  */
 
-export const DEVNET_EXPLORER = 'https://explorer.solana.com';
+import { buildExplorerUrl } from './network';
 
 /**
- * Generate Devnet explorer link for transaction
+ * Generate explorer link for transaction
  */
 export function getTxExplorerLink(txSignature: string): string {
   if (!/^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(txSignature) || txSignature.startsWith('demo-')) return '';
-  return `${DEVNET_EXPLORER}/tx/${txSignature}?cluster=devnet`;
+  return buildExplorerUrl('tx', txSignature);
 }
 
 /**

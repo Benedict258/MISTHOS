@@ -17,19 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { generateInvoiceReceiptHtml } from '@/lib/local-services';
 import { buildExplorerUrl, getInvoiceRecord, recordInvoiceEvent, updateInvoiceRecord, uploadInvoiceReceipt, type InvoicePaymentState, type StoredInvoice } from '@/lib/invoice-store';
 import { formatErrorMessage } from '@/lib/qa-utils';
-import { type InvoiceStatus, type LineItem } from '@/lib/constants';
-
-const TOKEN_MINTS: Record<string, string> = {
-  USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
-  USDT: 'Es9vMFrzaCERmJfrF4H2wF7v4YfLhM1cBh73PvvrLpzT',
-  SOL: 'So11111111111111111111111111111111111111112',
-};
-
-const TOKEN_DECIMALS: Record<string, number> = {
-  USDC: 6,
-  USDT: 6,
-  SOL: 9,
-};
+import { TOKEN_MINTS, TOKEN_DECIMALS, type InvoiceStatus, type LineItem } from '@/lib/constants';
+import { verifyPayload } from '@/lib/hmac';
 
 type PaymentMethod = 'wallet' | 'crosschain' | 'card' | 'x402';
 type Stage = 'select' | 'details' | 'processing' | 'confirming' | 'confirmed';
@@ -124,6 +113,8 @@ const PayInvoicePortfolio: React.FC = () => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [summaryMessage, setSummaryMessage] = useState('');
+  const [signatureValid, setSignatureValid] = useState<boolean | null>(null);
+  const [signatureChecking, setSignatureChecking] = useState(false);
 
   const sharedInvoice = useMemo<StoredInvoice | null>(() => {
     const params = new URLSearchParams(location.search);
@@ -169,6 +160,36 @@ const PayInvoicePortfolio: React.FC = () => {
       footer_note: parsed.footerNote,
     };
   }, [invoiceId, location.search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const encoded = params.get('d');
+    const sig = params.get('sig');
+    if (!encoded || !sig) {
+      setSignatureValid(sig ? false : null);
+      return;
+    }
+
+    let cancelled = false;
+    const verify = async () => {
+      setSignatureChecking(true);
+      try {
+        const parsed = decodeSharePayload(encoded);
+        if (!parsed) {
+          if (!cancelled) setSignatureValid(false);
+          return;
+        }
+        const valid = await verifyPayload(parsed as Record<string, unknown>, sig);
+        if (!cancelled) setSignatureValid(valid);
+      } catch {
+        if (!cancelled) setSignatureValid(false);
+      } finally {
+        if (!cancelled) setSignatureChecking(false);
+      }
+    };
+    void verify();
+    return () => { cancelled = true; };
+  }, [location.search]);
 
   useEffect(() => {
     let cancelled = false;
@@ -417,6 +438,17 @@ const PayInvoicePortfolio: React.FC = () => {
               </div>
             </motion.div>
 
+            {signatureChecking ? (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card border-amber-500/20 bg-amber-500/10 p-4">
+                <p className="text-sm font-medium text-amber-400">Verifying invoice signature...</p>
+              </motion.div>
+            ) : signatureValid === false ? (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card border-rose-500/20 bg-rose-500/10 p-4">
+                <p className="text-sm font-medium text-rose-400">This invoice link could not be verified.</p>
+                <p className="mt-1 text-xs text-rose-400/80">The signature is missing or invalid. The invoice data may have been tampered with.</p>
+              </motion.div>
+            ) : null}
+
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card p-6">
               <div className="mb-4 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -471,7 +503,15 @@ const PayInvoicePortfolio: React.FC = () => {
                 </div>
               ) : (
                 <div className="mt-4 space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  {signatureValid === false && new URLSearchParams(location.search).get('sig') ? (
+                    <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-center">
+                      <p className="text-sm font-medium text-rose-400">Signature verification failed</p>
+                      <p className="mt-1 text-xs text-rose-400/80">This invoice link could not be verified. Payment is blocked for security.</p>
+                      <Link to="/invoice/new" className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Create new invoice</Link>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-2">
                     {PAYMENT_METHODS.map((method) => (
                       <button
                         key={method.id}
@@ -527,6 +567,8 @@ const PayInvoicePortfolio: React.FC = () => {
                       </div>
                     </div>
                   ) : null}
+                    </>
+                  )}
                 </div>
               )}
             </div>

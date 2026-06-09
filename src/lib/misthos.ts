@@ -19,7 +19,7 @@ import {
   SystemProgram,
 } from "@solana/web3.js";
 import IDL from "../idl/workspace.json";
-import { configAddress } from "./configAddress";
+import { getNetworkConfig } from "./network";
 
 // ── Type Definitions ────────────────────────────────────────────────────────
 
@@ -118,12 +118,11 @@ export function getPaymentMethodString(method: PaymentMethodType): string {
 export class MisthosSDK {
   private readonly provider: Provider;
   private readonly program: Program<any>;
-  private readonly configAddress: PublicKey;
 
   constructor(provider: Provider) {
     this.provider = provider;
-    this.program = new Program(IDL as any, this.provider);
-    this.configAddress = new PublicKey(configAddress);
+    const config = getNetworkConfig();
+    this.program = new Program(IDL as any, config.programId, this.provider);
   }
 
   // ── BN Helpers ──────────────────────────────────────────────────────────
@@ -642,7 +641,7 @@ export class MisthosSDK {
 
   /** Get program ID */
   getProgramId(): PublicKey {
-    return this.program.programId;
+    return getNetworkConfig().programId;
   }
 }
 

@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import type { Invoice, InvoiceStatus, LineItem } from './constants';
+import { buildExplorerUrl as networkExplorerUrl } from './network';
 
 export type InvoicePaymentState = 'not_paid' | 'in_escrow' | 'paid' | 'verified' | 'disputed' | 'refunded';
 
@@ -478,7 +479,7 @@ export const timeAgo = (iso: string) => {
 
 export const buildExplorerUrl = (signature?: string) => {
   if (!isFullSignature(signature)) return '';
-  return `https://explorer.solana.com/tx/${signature}?cluster=devnet`;
+  return networkExplorerUrl('tx', signature);
 };
 
 export const isFullSignature = (signature?: string) =>

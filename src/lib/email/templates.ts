@@ -93,7 +93,7 @@ export function generateInvoiceEmailHTML(params: InvoiceEmailParams): string {
 
 export async function sendInvoiceEmail(
   params: InvoiceEmailParams,
-  apiBaseUrl: string = 'http://localhost:3000'
+  apiBaseUrl: string = typeof window !== 'undefined' ? window.location.origin : ''
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const emailHTML = generateInvoiceEmailHTML(params);
